@@ -1,0 +1,97 @@
+fragment-version-check:
+  extends: .fragment-version-check-template
+required-fragment-check:
+  extends: .required-fragment-check-template
+gitleaks:
+  extends: .gitleaks-template
+shell-check:
+  extends: .shell-check-template
+todo-check:
+  extends: .todo-check-template
+lint-source:
+  extends: .lint-source-template
+docker-lint:
+  extends: .docker-lint-template
+unit-test:
+  extends: .unit-test-template
+stryker-mutation:
+  allow_failure: true
+  extends: .stryker-mutation-template
+node-outdated:
+  allow_failure: true
+  extends: .node-outdated-template
+  variables:
+    IGNORE_PACKAGES: $NODE_OUTDATED_IGNORE_PACKAGES
+docker-build:
+  before_script:
+    - DOCKER_CLI_ARGS="$DOCKER_CLI_ARGS -t ${CI_REGISTRY_IMAGE}/${CI_COMMIT_REF_SLUG}:latest"
+  after_script:
+    - docker push $CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG:latest
+    - docker logout ${CI_REGISTRY}
+  extends: .docker-build-template
+trivy-container:
+  allow_failure: true
+  extends: .trivy-container-base
+container-test-command:
+  extends: .container-test-template
+sast-container:
+  needs:
+    - docker-build
+create-project-badges:
+  extends: .create-project-badges-template
+  allow_failure: true
+create-develop-morning-schedule:
+  extends: .add-schedule
+  variables:
+    SCHEDULE_NAME: Morning-Develop-CI-Build
+    SCHEDULE_BRANCH: develop
+    SCHEDULE_CRON: 30 05 * * *
+    RANDOMIZE_MINS: "true"
+push-to-ecr-prodaws:
+  extends: .push-to-ecr
+  when: manual
+push-to-ecr-nonprodaws:
+  extends: .push-to-ecr
+  when: manual
+  after_script:
+    - echo -e "Container for deployment is \e[35m$ECR_IMAGE_LOCATION\e[0m"
+functional-tests:
+  extends: .docker-compose-run
+  stage: functional-tests
+  variables:
+    DOCKER_COMPOSE_FILE: docker-compose.yml -f docker/docker-compose.test.yml
+    DOCKER_COMPOSE_COMMAND: "--exit-code-from node-test"
+a11y-tests:
+  extends: .docker-compose-run
+  stage: non-functional-tests
+  variables:
+    DOCKER_COMPOSE_FILE: docker-compose.yml -f docker/docker-compose.a11y.yml
+    DOCKER_COMPOSE_COMMAND: "--exit-code-from a11y-test"
+  artifacts:
+    when: always
+    paths:
+      - tests/a11y/report/
+  allow_failure: true
+security-tests:
+  extends: .docker-compose-run
+  stage: non-functional-tests
+  variables:
+    DOCKER_COMPOSE_FILE: docker-compose.yml -f docker/docker-compose.security.yml
+    DOCKER_COMPOSE_COMMAND: "--exit-code-from security-test"
+  artifacts:
+    when: always
+    paths:
+      - tests/security/security-report.json
+  allow_failure: true
+performance-tests:
+  extends: .docker-compose-run
+  stage: non-functional-tests
+  variables:
+    DOCKER_COMPOSE_FILE: docker-compose.yml -f docker/docker-compose.performance.yml
+    DOCKER_COMPOSE_COMMAND: "--exit-code-from performance-test"
+  artifacts:
+    paths:
+      - tests/performance/performance-report.json
+node-audit-production:
+  extends: .node-audit-production-base
+  allow_failure: true
