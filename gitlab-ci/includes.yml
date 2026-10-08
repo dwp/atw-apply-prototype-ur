@@ -48,7 +48,7 @@ include:
     ref: 2.11.3
     file: ci-include-sast-container-check.yml
   - project: dwp/engineering/pipeline-solutions/gitlab/fragments/trivy-container-check
-    ref: 2.23.1
+    ref: 2.24.0
     file: ci-include-trivy-container-check-base.yml
   - project: dwp/engineering/pipeline-solutions/gitlab/fragments/container-structure-test
     ref: 2.10.1
