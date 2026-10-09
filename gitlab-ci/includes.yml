@@ -66,5 +66,5 @@ include:
     ref: 2.7.5
     file: ci-include-schedule-creation.yml
   - project: dwp/engineering/pipeline-solutions/gitlab/functions
-    ref: 7.3.3
+    ref: 7.4.1
     file: functions/auto-tag-merge.gitlab-ci.yml
